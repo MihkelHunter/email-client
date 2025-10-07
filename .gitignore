@@ -27,7 +27,7 @@ go.work.sum
 # env file
 .env
 
-# Google API file
+# Google API files
 credentials.json
 token.json
 

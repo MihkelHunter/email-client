@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	//"net/mail"
-	"bufio"
+	//"bufio"
 	"mime"
 	"os"
 	"path/filepath"
@@ -97,11 +97,12 @@ func createMessage(from, to, subject, htmlBody string) *gmail.Message {
 }
 
 func main() {
-	inputReader := bufio.NewReader(os.Stdin)
+	//inputReader := bufio.NewReader(os.Stdin)
 
-	fmt.Print("Enter your email address: ")
-	from, _ := inputReader.ReadString('\n')
-	from = strings.TrimSpace(from)
+	//fmt.Print("Enter your email address: ")
+	//from, _ := inputReader.ReadString('\n')
+	//from = strings.TrimSpace(from)
+	from := "Teravmoon@gmail.com"
 
 	subject := mime.QEncoding.Encode("utf-8", "UUS hüperlahe album — Tee")
 
