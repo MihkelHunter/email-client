@@ -1,1 +1,1 @@
-Simple Gmail api email client.
+Simple email client with Gmail api.
