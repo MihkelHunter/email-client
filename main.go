@@ -6,24 +6,20 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/option"
 	"log"
-	//"net/mail"
-	//"bufio"
 	"mime"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-
-	"google.golang.org/api/gmail/v1"
 )
 
 func getClient() (*gmail.Service, error) {
 	ctx := context.Background()
-	b, err := ioutil.ReadFile("credentials.json")
+	b, err := os.ReadFile("credentials.json")
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +52,11 @@ func getClient() (*gmail.Service, error) {
 	}
 
 	client := config.Client(ctx, token)
-	return gmail.New(client)
+	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		return nil, err
+	}
+	return srv, nil
 }
 
 func loadTemplates(dir string) (map[string]string, error) {
@@ -97,13 +97,14 @@ func createMessage(from, to, subject, htmlBody string) *gmail.Message {
 }
 
 func main() {
-	//inputReader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter your email address: ")
+	var from string
+	_, err := fmt.Scanln(&from)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	//fmt.Print("Enter your email address: ")
-	//from, _ := inputReader.ReadString('\n')
-	//from = strings.TrimSpace(from)
-	from := "Teravmoon@gmail.com"
-
+	from = strings.TrimSpace(from)
 	subject := mime.QEncoding.Encode("utf-8", "UUS hüperlahe album — Tee")
 
 	service, err := getClient()
