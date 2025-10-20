@@ -6,8 +6,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/net/idna"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/text/encoding/charmap"
+	"golang.org/x/text/transform"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 	"log"
@@ -82,9 +85,35 @@ func loadTemplates(dir string) (map[string]string, error) {
 }
 
 func createMessage(from, to, subject, htmlBody string) *gmail.Message {
-	msg := []byte(
+	/*msg := []byte(
 		fmt.Sprintf("From: %s\r\n", from) +
 			fmt.Sprintf("To: %s\r\n", to) +
+			fmt.Sprintf("Subject: %s\r\n", subject) +
+			"MIME-Version: 1.0\r\n" +
+			"Content-Type: text/html; charset=\"UTF-8\"\r\n\r\n" +
+			htmlBody,
+	)
+
+	return &gmail.Message{
+		Raw: base64.URLEncoding.EncodeToString(msg),
+	}*/
+
+	parts := strings.Split(to, "@")
+	if len(parts) != 2 {
+		log.Printf("Invalid email format: %s", to)
+		return nil
+	}
+	local := parts[0]
+	domainASCII, err := idna.ToASCII(parts[1])
+	if err != nil {
+		log.Printf("Failed to encode domain: %s", parts[1])
+		return nil
+	}
+	toHeader := fmt.Sprintf("<%s@%s>", local, domainASCII)
+
+	msg := []byte(
+		fmt.Sprintf("From: %s\r\n", from) +
+			fmt.Sprintf("To: %s\r\n", toHeader) +
 			fmt.Sprintf("Subject: %s\r\n", subject) +
 			"MIME-Version: 1.0\r\n" +
 			"Content-Type: text/html; charset=\"UTF-8\"\r\n\r\n" +
@@ -105,7 +134,7 @@ func main() {
 	}
 
 	from = strings.TrimSpace(from)
-	subject := mime.QEncoding.Encode("utf-8", "UUS hüperlahe album — Tee")
+	subject := mime.QEncoding.Encode("utf-8", "UUS ALBUM! Teravmoon - Tee")
 
 	service, err := getClient()
 	if err != nil {
@@ -123,7 +152,10 @@ func main() {
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
+	decodedReader := transform.NewReader(file, charmap.Windows1257.NewDecoder())
+	reader := csv.NewReader(decodedReader)
+
+	//reader := csv.NewReader(file)
 	reader.Comma = ';'
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -131,19 +163,22 @@ func main() {
 	}
 
 	for _, record := range records {
-		if len(record) != 2 {
+		if len(record) != 3 {
 			log.Printf("Skipping invalid row: %v", record)
 			continue
 		}
 		email := strings.TrimSpace(record[0])
 		templateID := strings.TrimSpace(record[1])
+		recipientName := strings.TrimSpace(record[2])
+
 		body, ok := templates[templateID]
 		if !ok {
 			log.Printf("Template not found: %s", templateID)
 			continue
 		}
+		personalizedBody := strings.ReplaceAll(body, "{{name}}", recipientName)
 
-		msg := createMessage(from, email, subject, body)
+		msg := createMessage(from, email, subject, personalizedBody)
 		_, err := service.Users.Messages.Send("me", msg).Do()
 		if err != nil {
 			log.Printf("Failed to send email to %s: %v", email, err)
