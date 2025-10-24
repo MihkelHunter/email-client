@@ -6,6 +6,12 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"log"
+	"mime"
+	"os"
+	"path/filepath"
+	"strings"
+
 	"golang.org/x/net/idna"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -13,11 +19,6 @@ import (
 	"golang.org/x/text/transform"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
-	"log"
-	"mime"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 func getClient() (*gmail.Service, error) {
@@ -155,7 +156,7 @@ func main() {
 	decodedReader := transform.NewReader(file, charmap.Windows1257.NewDecoder())
 	reader := csv.NewReader(decodedReader)
 
-	//reader := csv.NewReader(file)
+	// reader := csv.NewReader(file)
 	reader.Comma = ';'
 	records, err := reader.ReadAll()
 	if err != nil {
