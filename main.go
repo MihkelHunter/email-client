@@ -135,7 +135,7 @@ func main() {
 	}
 
 	from = strings.TrimSpace(from)
-	subject := mime.QEncoding.Encode("utf-8", "UUS ALBUM! Teravmoon - Tee")
+	subject := mime.QEncoding.Encode("utf-8", "UUS Singel! Homme on Reede") // TODO: Veendu, et laulu nimi oleks õige!
 
 	service, err := getClient()
 	if err != nil {
